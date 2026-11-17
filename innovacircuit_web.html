@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InnovaCircuit - Tablero Arduino Interactivo (CET N.° 16)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            purple: '#7c3aed',
+                            purpleDark: '#5b21b6',
+                            purpleLight: '#a78bfa',
+                            bg: '#0f172a',
+                            card: '#1e293b',
+                            cardHover: '#334155',
+                            accent: '#06b6d4',
+                            accentGreen: '#10b981',
+                            amber: '#f59e0b',
+                            rose: '#f43f5e'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'Courier New', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #090d16;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #7c3aed;
+        }
+        /* Circuit pattern overlay effect */
+        .circuit-bg {
+            background-image: radial-gradient(rgba(124, 58, 237, 0.15) 1px, transparent 0);
+            background-size: 24px 24px;
+        }
+        /* Glassmorphism elements */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glow-purple {
+            box-shadow: 0 0 25px -5px rgba(124, 58, 237, 0.4);
+        }
+        .glow-cyan {
+            box-shadow: 0 0 25px -5px rgba(6, 182, 212, 0.4);
+        }
+    </style>
+</head>
+<body class="circuit-bg min-h-screen flex flex-col justify-between selection:bg-purple-500 selection:text-white">
+
+    <!-- TOP HEADER / BRANDING BANNER -->
+    <header class="sticky top-0 z-50 glass-card border-b border-slate-800 bg-slate-950/80 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap justify-between items-center gap-4">
+            <!-- Brand & Shield -->
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-purple-700 via-indigo-600 to-cyan-500 p-0.5 shadow-lg shadow-purple-900/50 flex items-center justify-center">
+                    <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+                        <i class="fa-solid font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400 text-xl">16</i>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="font-extrabold text-xl tracking-tight text-white">InnovaCircuit</h1>
+                        <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-900/60 text-purple-300 border border-purple-700/50">CET N.º 16</span>
+                    </div>
+                    <p class="text-xs text-slate-400 italic">"Transformando la teoría en práctica real."</p>
+                </div>
+            </div>
+
+            <!-- Academic Info Pill -->
+            <div class="hidden lg:flex items-center gap-4 text-xs text-slate-300 bg-slate-900/80 px-4 py-2 rounded-xl border border-slate-800">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-graduation-cap text-purple-400"></i>
+                    <span><strong>5.º 1.ª · 2026</strong></span>
+                </div>
+                <span class="text-slate-600">|</span>
+                <div>
+                    <span class="text-slate-400">Taller y Prácticas Profesionalizantes</span>
+                </div>
+            </div>
+
+            <!-- Mobile menu button toggle -->
+            <button id="mobileMenuBtn" class="lg:hidden text-slate-300 hover:text-white p-2 rounded-lg bg-slate-900 border border-slate-800">
+                <i class="fa-solid fa-bars text-lg"></i>
+            </button>
+        </div>
+
+        <!-- NAVIGATION BAR -->
+        <nav id="navMenu" class="hidden lg:block border-t border-slate-800/80 bg-slate-950/90">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-wrap gap-1 py-2 text-sm font-medium">
+                    <button onclick="switchTab('inicio')" class="nav-btn active-tab flex items-center gap-2 px-4 py-2 rounded-lg transition-all" data-target="inicio">
+                        <i class="fa-solid fa-house"></i> Presentación
+                    </button>
+                    <button onclick="switchTab('cerebro')" class="nav-btn flex items-center gap-2 px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all" data-target="cerebro">
+                        <i class="fa-solid fa-microchip text-purple-400"></i> Arduino & Bornes
+                    </button>
+                    <button onclick="switchTab('modulos')" class="nav-btn flex items-center gap-2 px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all" data-target="modulos">
+                        <i class="fa-solid fa-cubes text-cyan-400"></i> Módulos Interactivos
+                    </button>
+                    <button onclick="switchTab('simulador')" class="nav-btn flex items-center gap-2 px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all" data-target="simulador">
+                        <i class="fa-solid fa-calculator text-emerald-400"></i> Simulación HC-SR04
+                    </button>
+                    <button onclick="switchTab('construccion')" class="nav-btn flex items-center gap-2 px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all" data-target="construccion">
+                        <i class="fa-solid fa-screwdriver-wrench text-amber-400"></i> Fabricación & EPP
+                    </button>
+                    <button onclick="switchTab('energia')" class="nav-btn flex items-center gap-2 px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all" data-target="energia">
+                        <i class="fa-solid fa-bolt text-yellow-400"></i> Consumo Eléctrico
+                    </button>
+                    <button onclick="switchTab('foda-presupuesto')" class="nav-btn flex items-center gap-2 px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all" data-target="foda-presupuesto">
+                        <i class="fa-solid fa-chart-pie text-rose-400"></i> FODA & Presupuesto
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+
+        <!-- ==================== SECCIÓN 1: INICIO / PRESENTACIÓN ==================== -->
+        <section id="tab-inicio" class="tab-content space-y-8">
+            <!-- Hero Banner -->
+            <div class="relative overflow-hidden rounded-3xl glass-card border border-purple-500/20 p-8 sm:p-12 bg-gradient-to-br from-slate-900 via-slate-900 to-purple-950/40">
+                <div class="absolute -right-10 -bottom-10 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="relative z-10 max-w-3xl space-y-4">
+                    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                        <i class="fa-solid fa-shield-halved"></i> Proyecto Técnico Educativo 2026
+                    </span>
+                    <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+                        Réplica Didáctica del Tablero Arduino <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">Inspirado en YPF</span>
+                    </h2>
+                    <p class="text-slate-300 text-base sm:text-lg leading-relaxed">
+                        Una plataforma modular tecno-educativa diseñada para transformar la enseñanza de la electrónica y la programación. Integra sensores, actuadores y pantallas en una sola estructura para optimizar el tiempo real de práctica en el taller escolar.
+                    </p>
+                    <div class="pt-4 flex flex-wrap gap-4">
+                        <button onclick="switchTab('modulos')" class="px-6 py-3 rounded-xl font-semibold text-sm bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-900/30 transition-all flex items-center gap-2">
+                            Explorar Módulos del Tablero <i class="fa-solid fa-arrow-right text-xs"></i>
+                        </button>
+                        <button onclick="switchTab('simulador')" class="px-6 py-3 rounded-xl font-semibold text-sm glass-card hover:bg-slate-800 text-slate-200 transition-all flex items-center gap-2 border border-slate-700">
+                            Probar Calculadora Ultrasonido <i class="fa-solid fa-microchip text-cyan-400"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Problem vs Solution Section -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Problema en el taller -->
+                <div class="glass-card rounded-2xl p-6 border-l-4 border-rose-500 bg-slate-900/60">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center text-lg font-bold">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">La Clase de Taller Tradicional</h3>
+                            <p class="text-xs text-slate-400">El desafío de empezar de cero en cada clase</p>
+                        </div>
+                    </div>
+                    <ul class="space-y-3 text-sm text-slate-300">
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-xmark text-rose-400 mt-1"></i>
+                            <span>Búsqueda repetida de componentes y protoboards sueltos antes de cada actividad.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-xmark text-rose-400 mt-1"></i>
+                            <span>Pérdida excesiva de tiempo armando y desarmando conexiones cable a cable.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-xmark text-rose-400 mt-1"></i>
+                            <span>Riesgo continuo de malas conexiones y desgaste de pines en cada prueba rápida.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-xmark text-rose-400 mt-1"></i>
+                            <span>No todos los estudiantes llegan a cargar y validar su programa dentro de la clase.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Solución InnovaCircuit -->
+                <div class="glass-card rounded-2xl p-6 border-l-4 border-emerald-500 bg-slate-900/60">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-lg font-bold">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">La Propuesta InnovaCircuit</h3>
+                            <p class="text-xs text-slate-400">Todo listo, ordenado y reutilizable</p>
+                        </div>
+                    </div>
+                    <ul class="space-y-3 text-sm text-slate-300">
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-check text-emerald-400 mt-1"></i>
+                            <span><strong>Todo en una sola estructura:</strong> Selección directa de sensor, motor o pantalla.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-check text-emerald-400 mt-1"></i>
+                            <span><strong>Conexiones mediante bornes:</strong> Vinculación rápida con jumpers hacia Arduino.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-check text-emerald-400 mt-1"></i>
+                            <span><strong>Aprendizaje visual y ágil:</strong> Cargar el programa e interactuar en el momento.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-check text-emerald-400 mt-1"></i>
+                            <span><strong>Estructura reparable y ampliable:</strong> Placas PCB modulares independientes.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Team & Institutional Credits Grid -->
+            <div class="glass-card rounded-2xl p-6 border border-slate-800">
+                <h3 class="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                    <i class="fa-solid fa-users-gear text-purple-400"></i> Ficha Técnica del Proyecto & Equipo
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Integrantes -->
+                    <div class="bg-slate-950/60 rounded-xl p-4 border border-slate-800">
+                        <h4 class="text-xs font-bold text-purple-400 uppercase tracking-wider mb-3">Integrantes del Equipo</h4>
+                        <ul class="space-y-2 text-sm text-slate-200">
+                            <li class="flex items-center gap-2">
+                                <i class="fa-solid fa-user-gear text-xs text-slate-500"></i> Viara Vitulich
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <i class="fa-solid fa-user-gear text-xs text-slate-500"></i> Tiziano Ibáñez
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <i class="fa-solid fa-user-gear text-xs text-slate-500"></i> Lautaro Guzmán
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Docentes -->
+                    <div class="bg-slate-950/60 rounded-xl p-4 border border-slate-800">
+                        <h4 class="text-xs font-bold text-cyan-400 uppercase tracking-wider mb-3">Docentes de Prácticas</h4>
+                        <ul class="space-y-2 text-sm text-slate-200">
+                            <li class="flex items-center gap-2">
+                                <i class="fa-solid fa-user-tie text-xs text-slate-500"></i> Celeste Canciones
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <i class="fa-solid fa-user-tie text-xs text-slate-500"></i> Lorena Toloza
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <i class="fa-solid fa-user-tie text-xs text-slate-500"></i> Marlen Méndez
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Institución -->
+                    <div class="bg-slate-950/60 rounded-xl p-4 border border-slate-800">
+                        <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-3">Marco Académico</h4>
+                        <p class="text-sm text-white font-medium">CET N.º 16 - Técnico Electrónico</p>
+                        <p class="text-xs text-slate-400 mt-1">Curso: 5.º 1.ª · Ciclo Lectivo 2026</p>
+                        <p class="text-xs text-slate-400">Espacio Curricular: Taller y Prácticas Profesionalizantes</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SECCIÓN 2: CEREBRO Y CONEXIONES ==================== -->
+        <section id="tab-cerebro" class="tab-content hidden space-y-8">
+            <div class="glass-card rounded-2xl p-6 sm:p-8 border border-purple-500/20">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-12 h-12 rounded-xl bg-purple-600/20 text-purple-400 flex items-center justify-center text-2xl font-bold">
+                        <i class="fa-solid fa-microchip"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Arduino UNO: El Cerebro del Tablero</h2>
+                        <p class="text-sm text-slate-400">Unidad Central de Control que procesa entradas y activa salidas</p>
+                    </div>
+                </div>
+
+                <!-- Technical Specs of Arduino UNO -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800 flex items-start gap-3">
+                        <i class="fa-solid fa-toggle-on text-purple-400 text-xl mt-1"></i>
+                        <div>
+                            <span class="block text-xl font-bold text-white">14 Pines Digitales</span>
+                            <span class="text-xs text-slate-400">D0 a D13. Leen estados lógicos (HIGH/LOW) y generan señales PWM para motores.</span>
+                        </div>
+                    </div>
+                    <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800 flex items-start gap-3">
+                        <i class="fa-solid fa-wave-square text-cyan-400 text-xl mt-1"></i>
+                        <div>
+                            <span class="block text-xl font-bold text-white">6 Entradas Analógicas</span>
+                            <span class="text-xs text-slate-400">A0 a A5. Miden variaciones continuas de tensión (como ejes de Joystick).</span>
+                        </div>
+                    </div>
+                    <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800 flex items-start gap-3">
+                        <i class="fa-solid fa-plug text-emerald-400 text-xl mt-1"></i>
+                        <div>
+                            <span class="block text-xl font-bold text-white">5V & GND Común</span>
+                            <span class="text-xs text-slate-400">Puntos de alimentación y referencia común compartida con los módulos.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conceptos Eléctricos Fundamentales -->
+                <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-diagram-project text-cyan-400"></i> Sistema de Bornes y Conceptos Eléctricos
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+                        <div class="w-8 h-8 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center font-bold mb-2">VCC</div>
+                        <h4 class="font-bold text-sm text-white">Alimentación Positiva</h4>
+                        <p class="text-xs text-slate-400 mt-1">Tensión que energiza el módulo. Debe comprobarse la especificación (5V usualmente) antes de conectar.</p>
+                    </div>
+
+                    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+                        <div class="w-8 h-8 rounded-lg bg-slate-700 text-slate-200 flex items-center justify-center font-bold mb-2">GND</div>
+                        <h4 class="font-bold text-sm text-white">Referencia Común</h4>
+                        <p class="text-xs text-slate-400 mt-1">GND compartido imprescindible entre el Arduino y todos los módulos para sincronizar señales eléctricas.</p>
+                    </div>
+
+                    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+                        <div class="w-8 h-8 rounded-lg bg-yellow-500/20 text-yellow-400 flex items-center justify-center font-bold mb-2">SIG</div>
+                        <h4 class="font-bold text-sm text-white">Terminal de Señal</h4>
+                        <p class="text-xs text-slate-400 mt-1">Transporta la información de datos (digital, analógica, PWM o comunicación serial/I2C).</p>
+                    </div>
+
+                    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+                        <div class="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold mb-2">
+                            <i class="fa-solid fa-circle-dot"></i>
+                        </div>
+                        <h4 class="font-bold text-sm text-white">Bornes Rojos/Negros</h4>
+                        <p class="text-xs text-slate-400 mt-1">~100 bornes en el tablero para conexión segura con cables jumper macho-macho o hembra-macho.</p>
+                    </div>
+                </div>
+
+                <div class="mt-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs sm:text-sm flex items-start gap-3">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-400 text-lg mt-0.5"></i>
+                    <div>
+                        <strong>Regla de Seguridad Eléctrica:</strong> Nunca conectar motores o servomotores directamente desde los pines de salida de Arduino. Requieren etapa de potencia (como el driver L298N) y fuente externa dedicada con masa común.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SECCIÓN 3: MÓDULOS DEL TABLERO ==================== -->
+        <section id="tab-modulos" class="tab-content hidden space-y-6">
+            <!-- Filter & Search Controls -->
+            <div class="glass-card p-4 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex flex-wrap items-center gap-2" id="filterBtnGroup">
+                    <button onclick="filterModules('all')" class="module-filter-btn active-filter px-4 py-2 rounded-xl text-xs font-semibold transition-all bg-purple-600 text-white">
+                        Todos los Módulos
+                    </button>
+                    <button onclick="filterModules('entrada')" class="module-filter-btn px-4 py-2 rounded-xl text-xs font-semibold transition-all bg-slate-800 text-slate-300 hover:bg-slate-700">
+                        <i class="fa-solid fa-right-to-bracket text-cyan-400 mr-1"></i> Entradas / Sensores
+                    </button>
+                    <button onclick="filterModules('salida')" class="module-filter-btn px-4 py-2 rounded-xl text-xs font-semibold transition-all bg-slate-800 text-slate-300 hover:bg-slate-700">
+                        <i class="fa-solid fa-gears text-rose-400 mr-1"></i> Salidas / Actuadores
+                    </button>
+                    <button onclick="filterModules('visualizacion')" class="module-filter-btn px-4 py-2 rounded-xl text-xs font-semibold transition-all bg-slate-800 text-slate-300 hover:bg-slate-700">
+                        <i class="fa-solid fa-desktop text-emerald-400 mr-1"></i> Visualización
+                    </button>
+                </div>
+
+                <div class="relative w-full sm:w-64">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-xs text-slate-400"></i>
+                    <input type="text" id="moduleSearch" placeholder="Buscar componente..." onkeyup="searchModules()" class="w-full bg-slate-950 border border-slate-800 text-xs text-white pl-9 pr-4 py-2 rounded-xl focus:outline-none focus:border-purple-500">
+                </div>
+            </div>
+
+            <!-- Modules Grid -->
+            <div id="modulesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                <!-- 1. HC-SR04 -->
+                <div class="module-card glass-card rounded-2xl p-6 border border-slate-800 hover:border-cyan-500/50 transition-all" data-category="entrada" data-name="ultrasonido hc-sr04 sensor distancia">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 uppercase">Entrada · Sensor</span>
+                        <i class="fa-solid fa-bullhorn text-cyan-400 text-lg"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-1">Ultrasonido HC-SR04</h3>
+                    <p class="text-xs text-slate-400 mb-4">Estimación de distancia mediante rebote de ondas ultrasónicas.</p>
+                    <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 space-y-2 text-xs font-mono">
+                        <div class="text-slate-300">Terminales: VCC, TRIG, ECHO, GND</div>
+                        <div class="text-emerald-400">Fórmula: dist = t * 0.0343 / 2</div>
+                    </div>
+                </div>
+
+                <!-- 2. DHT11 -->
+                <div class="module-card glass-card rounded-2xl p-6 border border-slate-800 hover:border-cyan-500/50 transition-all" data-category="entrada" data-name="dht11 humedad temperatura sensor">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 uppercase">Entrada · Sensor</span>
+                        <i class="fa-solid fa-temperature-half text-cyan-400 text-lg"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-1">DHT11 Temperatura y Humedad</h3>
+                    <p class="text-xs text-slate-400 mb-4">Sensor digital ambiental de un solo hilo de datos (1-Wire).</p>
+                    <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 space-y-2 text-xs font-mono">
+                        <div class="text-slate-300">Terminales: VCC, GND, OUT (Data)</div>
+                        <div class="text-slate-400">Informa °C y % de Humedad relativa</div>
+                    </div>
+                </div>
+
+                <!-- 3. Sensor de Sonido -->
+                <div class="module-card glass-card rounded-2xl p-6 border border-slate-800 hover:border-cyan-500/50 transition-all" data-category="entrada" data-name="sonido microfono sensor variaciones">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 uppercase">Entrada · Sensor</span>
+                        <i class="fa-solid fa-microphone text-cyan-400 text-lg"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-1">Sensor de Sonido</h3>
+                    <p class="text-xs text-slate-400 mb-4">Detecta variaciones de presión sonora con potenciómetro de umbral.</p>
+                    <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 space-y-2 text-xs font-mono">
+                        <div class="text-slate-300">Salida Analógica (AO) / Digital (DO)</div>
+                    </div>
+                </div>
+
+                <!-- 4. Sensor Inclinación -->
+                <div class="module-card glass-card rounded-2xl p-6 border border-slate-800 hover:border-cyan-500/50 transition-all" data-category="entrada" data-name="inclinacion posicion sensor switch">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 uppercase">Entrada · Sensor</span>
+                        <i class="fa-solid fa-arrows-spin text-cyan-400 text-lg"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-1">Sensor de Inclinación</h3>
+                    <p class="text-xs text-slate-400 mb-4">Reconoce cambios de posición mediante elemento conductor móvil interno.</p>
+                    <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 space-y-2 text-xs font-mono">
+                        <div class="text-slate-300">Respuesta Digital (Contacto Abierto/Cerrado)</div>
+                    </div>
+                </div>
+
+                <!-- 5. Joystick -->
+                <div class="module-card glass-card rounded-2xl p-6 border border-slate-800 hover:border-cyan-500/50 transition-all" data-category="entrada" data-name="joystick ejes analogico pulsador sw">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 uppercase">Entrada · Mando</span>
+                        <i class="fa-solid fa-gamepad text-cyan-400 text-lg"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-1">Joystick Analógico 2 Ejes</h3>
+                    <p class="text-xs text-slate-400 mb-4">Control continuo en ejes X/Y más pulsador digital integrado (SW).</p>
+                    <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 space-y-2 text-xs font-mono">
+                        <div class="text-slate-300">Terminales: VCC, GND, VRx, VRy, SW</div>
+                    </div>
+                </div>
+
+                <!-- 6. Teclado Matricial -->
+                <div class="module-card glass-card rounded-2xl p-6 border border-slate-800 hover:border-cyan-500/50 transition-all" data-category="entrada" data-name="teclado matricial 4x4 botones">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 uppercase">Entrada · Mando</span>
+                        <i class="fa-solid fa-keyboard text-cyan-400 text-lg"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-1">Teclado Matricial 4×4</h3>
+                    <p class="text-xs text-slate-400 mb-4">16 teclas dispuestas en 4 Filas (F1-F4) y 4 Columnas (C1-C4).</p>
+                    <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 space-y-2 text-xs font-mono">
+                        <div class="text-slate-300">Exploración secuencial de 8 pines en total</div>
+                    </div>
+                </div>
+
+                <!-- 7. LED RGB -->
+                <div class="module-card glass-card rounded-2xl p-6 border border-slate-800 hover:border-rose-500/50 transition-all" data-category="salida" data-name="led rgb colores diodo">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20 uppercase">Salida · Actuador</span>
+                        <i class="fa-solid fa-lightbulb text-rose-400 text-lg"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-1">LED RGB</h3>
+                    <p class="text-xs text-slate-400 mb-4">Mezcla tricolor (Rojo, Verde, Azul) mediante control de pulso PWM.</p>
+                    <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 space-y-2 text-xs font-mono">
+                        <div class="text-slate-300">Requiere resistencias limitadoras por canal</div>
+                    </div>
+                </div>
+
+                <!-- 8. Buzzer Pasivo -->
+                <div class="module-card glass-card rounded-2xl p-6 border border-slate-800 hover:border-rose-500/50 transition-all" data-category="salida" data-name="buzzer pasivo sonido zumbador">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20 uppercase">Salida · Actuador</span>
+                        <i class="fa-solid fa-volume-high text-rose-400 text-lg"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-1">Buzzer Pasivo</h3>
+                    <p class="text-xs text-slate-400 mb-4">Emisión de avisos sonoros y melodías mediante frecuencia generada.</p>
+                    <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 space-y-2 text-xs font-mono">
+                        <div class="text-slate-300">Terminales: VCC, GND, OUT/SIG</div>
+                    </div>
+                </div>
+
+                <!-- 9. Servos SG90 -->
+                <div class="module-card glass-card rounded-2xl p-6 border border-slate-800 hover:border-rose-500/50 transition-all" data-category="salida" data-name="servomotores sg90 posicion angular servo">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20 uppercase">Salida · Actuador</span>
+                        <i class="fa-solid fa-robot text-rose-400 text-lg"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-1">2 Servomotores SG90</h3>
+                    <p class="text-xs text-slate-400 mb-4">Control preciso de posición angular (0° a 180°) mediante realimentación.</p>
+                    <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 space-y-2 text-xs font-mono">
+                        <div class="text-slate-300">Terminales: VCC, GND, PWM Signal</div>
+                        <div class="text-amber-400">Usar fuente externa dedicada</div>
+                    </div>
+                </div>
+
+                <!-- 10. Motor DC + L298N -->
+                <div class="module-card glass-card rounded-2xl p-6 border border-slate-800 hover:border-rose-500/50 transition-all" data-category="salida" data-name="motor dc l298n driver puente h velocidad">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20 uppercase">Salida · Potencia</span>
+                        <i class="fa-solid fa-fan text-rose-400 text-lg"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-1">Motor DC & Driver L298N</h3>
+                    <p class="text-xs text-slate-400 mb-4">Controlador Puente H para sentido de giro y modulación PWM de velocidad.</p>
+                    <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 space-y-2 text-xs font-mono">
+                        <div class="text-slate-300">Bornes ENA, IN1, IN2, IN3, IN4, ENB</div>
+                    </div>
+                </div>
+
+                <!-- 11. Módulo 4 Relés -->
+                <div class="module-card glass-card rounded-2xl p-6 border border-slate-800 hover:border-rose-500/50 transition-all" data-category="salida" data-name="reles relé conmuntacion bobina contactos">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20 uppercase">Salida · Conmutación</span>
+                        <i class="fa-solid fa-toggle-on text-rose-400 text-lg"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-1">Módulo de 4 Relés</h3>
+                    <p class="text-xs text-slate-400 mb-4">Conmutación electromecánica para control aislado de cargas externas.</p>
+                    <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 space-y-2 text-xs font-mono">
+                        <div class="text-slate-300">Contactos: COM, NC (Cerrado), NA (Abierto)</div>
+                    </div>
+                </div>
+
+                <!-- 12. Pantalla LCD 16x2 -->
+                <div class="module-card glass-card rounded-2xl p-6 border border-slate-800 hover:border-emerald-500/50 transition-all" data-category="visualizacion" data-name="pantalla lcd 16x2 i2c texto">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase">Visualización</span>
+                        <i class="fa-solid fa-tv text-emerald-400 text-lg"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-1">Pantalla LCD 16×2 (I2C)</h3>
+                    <p class="text-xs text-slate-400 mb-4">Presentación de 2 filas de 16 caracteres mediante adaptador I2C.</p>
+                    <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 space-y-2 text-xs font-mono">
+                        <div class="text-slate-300">Líneas I2C: SDA, SCL + VCC, GND</div>
+                    </div>
+                </div>
+
+                <!-- 13. Matriz LED 8x8 -->
+                <div class="module-card glass-card rounded-2xl p-6 border border-slate-800 hover:border-emerald-500/50 transition-all" data-category="visualizacion" data-name="matriz led 8x8 max7219 multiplexacion">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase">Visualización</span>
+                        <i class="fa-solid fa-table-cells text-emerald-400 text-lg"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-1">Matriz LED 8×8 (MAX7219)</h3>
+                    <p class="text-xs text-slate-400 mb-4">64 diodos LED para gráficos y caracteres mediante multiplexación.</p>
+                    <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 space-y-2 text-xs font-mono">
+                        <div class="text-slate-300">Control por bus SPI: VCC, GND, DIN, CS, CLK</div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ==================== SECCIÓN 4: SIMULADOR DE ULTRASONIDO HC-SR04 ==================== -->
+        <section id="tab-simulador" class="tab-content hidden space-y-8">
+            <div class="glass-card rounded-3xl p-6 sm:p-10 border border-cyan-500/30 bg-gradient-to-br from-slate-900 via-slate-900 to-cyan-950/20">
+                <div class="max-w-3xl mx-auto text-center space-y-4 mb-8">
+                    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+                        <i class="fa-solid fa-calculator"></i> Calculadora Oficial del Proyecto
+                    </span>
+                    <h2 class="text-3xl font-extrabold text-white">Simulador del Sensor HC-SR04</h2>
+                    <p class="text-sm text-slate-300">
+                        Ingresa el tiempo en microsegundos (µs) devuelto por la señal <span class="font-mono text-cyan-300">pulseIn(echoPin, HIGH)</span> para calcular la distancia estimada utilizando la constante física del informe.
+                    </p>
+                </div>
+
+                <!-- Interactive Calculator Grid -->
+                <div class="max-w-xl mx-auto bg-slate-950 p-6 sm:p-8 rounded-2xl border border-slate-800 space-y-6">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+                            Duración del Pulso Eco (µs)
+                        </label>
+                        <div class="relative">
+                            <input type="number" id="usInput" value="1000" min="100" max="30000" oninput="calculateDistance()" class="w-full bg-slate-900 border border-slate-700 text-white font-mono text-lg px-4 py-3 rounded-xl focus:outline-none focus:border-cyan-500">
+                            <span class="absolute right-4 top-3.5 text-xs font-mono text-slate-500">µs</span>
+                        </div>
+                        <input type="range" id="usRange" value="1000" min="200" max="15000" oninput="syncFromRange()" class="w-full mt-4 accent-cyan-400">
+                    </div>
+
+                    <!-- Formula Display -->
+                    <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 font-mono text-xs text-slate-300 space-y-1">
+                        <div class="text-slate-500">// Fórmula del informe técnico:</div>
+                        <div>float distancia = duracion * <span class="text-cyan-400 font-bold">0.0343</span> / <span class="text-purple-400 font-bold">2.0</span>;</div>
+                    </div>
+
+                    <!-- Result Box -->
+                    <div class="p-6 rounded-xl bg-gradient-to-r from-cyan-950/40 to-purple-950/40 border border-cyan-500/40 text-center space-y-1">
+                        <span class="text-xs uppercase font-semibold text-slate-400">Distancia Calculada</span>
+                        <div id="distResult" class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 font-mono">
+                            17.15 cm
+                        </div>
+                        <span class="text-xs text-slate-500 block">(0.0343 cm/µs es la velocidad del sonido en el aire)</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SECCIÓN 5: PROCESO DE CONSTRUCCIÓN Y SEGURIDAD ==================== -->
+        <section id="tab-construccion" class="tab-content hidden space-y-8">
+            <!-- Pasos de Fabricación -->
+            <div class="glass-card rounded-2xl p-6 sm:p-8 border border-slate-800">
+                <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                    <i class="fa-solid fa-list-check text-amber-400"></i> Etapas de Construcción del Tablero
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800 space-y-2">
+                        <span class="w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold flex items-center justify-center">1</span>
+                        <h3 class="font-bold text-sm text-white">Observar</h3>
+                        <p class="text-xs text-slate-400">Estudio del tablero didáctico de YPF tomada como referencia original.</p>
+                    </div>
+                    <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800 space-y-2">
+                        <span class="w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold flex items-center justify-center">2</span>
+                        <h3 class="font-bold text-sm text-white">Diseñar</h3>
+                        <p class="text-xs text-slate-400">Croquis de distribución y diagramas en Livewire y PCB Wizard.</p>
+                    </div>
+                    <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800 space-y-2">
+                        <span class="w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold flex items-center justify-center">3</span>
+                        <h3 class="font-bold text-sm text-white">Fabricar PCB</h3>
+                        <p class="text-xs text-slate-400">Transferencia térmica, cloruro férrico, perforado con taladro y soldadura.</p>
+                    </div>
+                    <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800 space-y-2">
+                        <span class="w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold flex items-center justify-center">4</span>
+                        <h3 class="font-bold text-sm text-white">Probar</h3>
+                        <p class="text-xs text-slate-400">Pruebas individuales de programas de testeo para cada módulo.</p>
+                    </div>
+                    <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800 space-y-2">
+                        <span class="w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold flex items-center justify-center">5</span>
+                        <h3 class="font-bold text-sm text-white">Armar</h3>
+                        <p class="text-xs text-slate-400">Estructura de madera marcada, perforada con cinceles y pintada.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seguridad y EPP -->
+            <div class="glass-card rounded-2xl p-6 sm:p-8 border border-slate-800">
+                <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-user-shield text-rose-400"></i> Normas de Seguridad & Equipos de Protección (EPP)
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex items-center gap-3">
+                        <i class="fa-solid fa-shoe-prints text-rose-400 text-xl"></i>
+                        <div>
+                            <h4 class="font-bold text-xs text-white">Calzado de Seguridad</h4>
+                            <p class="text-[11px] text-slate-400">Obligatorio en el taller</p>
+                        </div>
+                    </div>
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex items-center gap-3">
+                        <i class="fa-solid fa-glasses text-cyan-400 text-xl"></i>
+                        <div>
+                            <h4 class="font-bold text-xs text-white">Protección Ocular</h4>
+                            <p class="text-[11px] text-slate-400">Al perforar y soldar</p>
+                        </div>
+                    </div>
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex items-center gap-3">
+                        <i class="fa-solid fa-shirt text-purple-400 text-xl"></i>
+                        <div>
+                            <h4 class="font-bold text-xs text-white">Ropa de Grafa</h4>
+                            <p class="text-[11px] text-slate-400">Camisa y pantalón técnico</p>
+                        </div>
+                    </div>
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 flex items-center gap-3">
+                        <i class="fa-solid fa-ear-listen text-emerald-400 text-xl"></i>
+                        <div>
+                            <h4 class="font-bold text-xs text-white">Protección Auditiva</h4>
+                            <p class="text-[11px] text-slate-400">Al realizar cortes</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SECCIÓN 6: CONSUMO ELÉCTRICO ==================== -->
+        <section id="tab-energia" class="tab-content hidden space-y-8">
+            <div class="glass-card rounded-2xl p-6 sm:p-8 border border-slate-800">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-bolt text-yellow-400"></i> Consumo Eléctrico Orientativo
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-1">Estimación de corriente (mA) para planificar la fuente de alimentación adecuada.</p>
+                    </div>
+                    <span class="text-xs font-mono text-yellow-400 bg-yellow-400/10 px-3 py-1 rounded-full border border-yellow-400/20">Valores de referencia</span>
+                </div>
+
+                <!-- Interactive Current Consumption Calculator -->
+                <div class="bg-slate-950 rounded-xl p-6 border border-slate-800 space-y-4">
+                    <h3 class="text-sm font-bold text-white uppercase tracking-wider">Simulador de Carga Simultánea</h3>
+                    <p class="text-xs text-slate-400">Selecciona los componentes que funcionarán al mismo tiempo:</p>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                        <label class="flex items-center gap-2 bg-slate-900 p-3 rounded-xl border border-slate-800 cursor-pointer text-xs">
+                            <input type="checkbox" checked disabled class="accent-purple-500">
+                            <span>Arduino UNO (Placa Base) (~60 mA)</span>
+                        </label>
+                        <label class="flex items-center gap-2 bg-slate-900 p-3 rounded-xl border border-slate-800 cursor-pointer text-xs">
+                            <input type="checkbox" id="chkRelays" onchange="calcTotalCurrent()" class="accent-purple-500">
+                            <span>4 Relés Activados (~320 mA)</span>
+                        </label>
+                        <label class="flex items-center gap-2 bg-slate-900 p-3 rounded-xl border border-slate-800 cursor-pointer text-xs">
+                            <input type="checkbox" id="chkServos" onchange="calcTotalCurrent()" class="accent-purple-500">
+                            <span>2 Servos en Movimiento (~350 mA)</span>
+                        </label>
+                        <label class="flex items-center gap-2 bg-slate-900 p-3 rounded-xl border border-slate-800 cursor-pointer text-xs">
+                            <input type="checkbox" id="chkLCD" onchange="calcTotalCurrent()" class="accent-purple-500">
+                            <span>LCD 16x2 con Luz (~25 mA)</span>
+                        </label>
+                        <label class="flex items-center gap-2 bg-slate-900 p-3 rounded-xl border border-slate-800 cursor-pointer text-xs">
+                            <input type="checkbox" id="chkHCSR04" onchange="calcTotalCurrent()" class="accent-purple-500">
+                            <span>Sensor HC-SR04 (~15 mA)</span>
+                        </label>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-800 flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-300">Consumo Estimado Resultante:</span>
+                        <span id="currentTotal" class="text-2xl font-mono font-extrabold text-yellow-400">60 mA</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SECCIÓN 7: FODA Y PRESUPUESTO ==================== -->
+        <section id="tab-foda-presupuesto" class="tab-content hidden space-y-8">
+
+            <!-- Estado del Proyecto & Avance -->
+            <div class="glass-card rounded-2xl p-6 border border-slate-800">
+                <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-bars-progress text-cyan-400"></i> Estado Actual del Proyecto
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between text-xs font-bold mb-1">
+                            <span class="text-slate-300">Avance General Estimado</span>
+                            <span class="text-cyan-400 font-mono">70% Listo</span>
+                        </div>
+                        <div class="w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                            <div class="h-full bg-gradient-to-r from-purple-500 to-cyan-400 w-[70%]"></div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                        <div class="bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20 text-emerald-300 space-y-1">
+                            <span class="font-bold flex items-center gap-1"><i class="fa-solid fa-check"></i> Realizado:</span>
+                            <p>Diseño, placas PCB fabricadas/soldadas y pruebas individuales de programas por módulo.</p>
+                        </div>
+                        <div class="bg-amber-500/10 p-3 rounded-xl border border-amber-500/20 text-amber-300 space-y-1">
+                            <span class="font-bold flex items-center gap-1"><i class="fa-solid fa-hourglass-half"></i> Pendiente:</span>
+                            <p>Completar cableado general, bornes restantes, fuente/fusible y validación final integrada.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Matriz FODA -->
+            <div class="space-y-4">
+                <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-table-cells-large text-purple-400"></i> Matriz FODA Interactiva
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- F -->
+                    <div class="glass-card p-5 rounded-2xl border-l-4 border-emerald-500 bg-slate-900/40">
+                        <h4 class="font-bold text-emerald-400 text-sm uppercase mb-2">Fortalezas</h4>
+                        <ul class="text-xs text-slate-300 space-y-1.5 list-disc list-inside">
+                            <li>Reúne sensores, actuadores y módulos en una sola estructura.</li>
+                            <li>Prácticas repetibles sin necesidad de armar desde cero.</li>
+                            <li>Orden de conexiones mediante bornes etiquetados.</li>
+                        </ul>
+                    </div>
+                    <!-- O -->
+                    <div class="glass-card p-5 rounded-2xl border-l-4 border-cyan-500 bg-slate-900/40">
+                        <h4 class="font-bold text-cyan-400 text-sm uppercase mb-2">Oportunidades</h4>
+                        <ul class="text-xs text-slate-300 space-y-1.5 list-disc list-inside">
+                            <li>Sumar nuevos programas, módulos y guías didácticas.</li>
+                            <li>Uso en distintos años y niveles del taller técnico.</li>
+                            <li>Mejora continua basada en devoluciones de los estudiantes.</li>
+                        </ul>
+                    </div>
+                    <!-- D -->
+                    <div class="glass-card p-5 rounded-2xl border-l-4 border-amber-500 bg-slate-900/40">
+                        <h4 class="font-bold text-amber-400 text-sm uppercase mb-2">Debilidades</h4>
+                        <ul class="text-xs text-slate-300 space-y-1.5 list-disc list-inside">
+                            <li>Falta completar cableado general y bornes restantes.</li>
+                            <li>Documentación técnica y fichas en proceso de finalización.</li>
+                            <li>Planificación detallada para picos de corriente.</li>
+                        </ul>
+                    </div>
+                    <!-- A -->
+                    <div class="glass-card p-5 rounded-2xl border-l-4 border-rose-500 bg-slate-900/40">
+                        <h4 class="font-bold text-rose-400 text-sm uppercase mb-2">Amenazas</h4>
+                        <ul class="text-xs text-slate-300 space-y-1.5 list-disc list-inside">
+                            <li>Aumento de costos de insumos y falta de repuestos.</li>
+                            <li>Posibles daños en componentes por errores de conexión.</li>
+                            <li>Desgaste natural de cables y bornes por el uso continuo.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Presupuesto Preliminar -->
+            <div class="glass-card rounded-2xl p-6 border border-slate-800">
+                <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-coins text-rose-400"></i> Desglose del Presupuesto Preliminar (ARS)
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="bg-slate-950 text-slate-400 uppercase font-mono border-b border-slate-800">
+                            <tr>
+                                <th class="p-3">Rubro</th>
+                                <th class="p-3">Estimación Mínima</th>
+                                <th class="p-3">Estimación Máxima</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800">
+                            <tr>
+                                <td class="p-3 font-medium text-white">Materiales y Componentes</td>
+                                <td class="p-3 font-mono text-cyan-400">$190.000</td>
+                                <td class="p-3 font-mono text-cyan-400">$340.000</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-medium text-white">Mano de Obra Estimada</td>
+                                <td class="p-3 font-mono text-purple-400">$100.000</td>
+                                <td class="p-3 font-mono text-purple-400">$200.000</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-medium text-white">Contingencia (10% de Materiales)</td>
+                                <td class="p-3 font-mono text-amber-400">$19.000</td>
+                                <td class="p-3 font-mono text-amber-400">$34.000</td>
+                            </tr>
+                            <tr class="bg-slate-950/80 font-bold">
+                                <td class="p-3 text-white uppercase">Total Estimado de Fabricación</td>
+                                <td class="p-3 font-mono text-lg text-emerald-400">$309.000</td>
+                                <td class="p-3 font-mono text-lg text-emerald-400">$574.000</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-3 italic">
+                    * Nota: La institución ya contaba con parte de los materiales y herramientas, por lo que el gasto real del equipo fue significativamente menor.
+                </p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER INSTITUCIONAL -->
+    <footer class="glass-card border-t border-slate-800 bg-slate-950 py-6 mt-12 text-xs text-slate-400">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap justify-between items-center gap-4">
+            <div>
+                <p class="font-bold text-white">InnovaCircuit &copy; 2026 - CET N.º 16</p>
+                <p class="text-[11px]">Taller y Prácticas Profesionalizantes · Técnico Electrónico</p>
+            </div>
+            <div class="text-right">
+                <p>Estudiantes: Viara Vitulich · Tiziano Ibáñez · Lautaro Guzmán</p>
+                <p class="text-[11px] text-slate-500">Basado en el Informe Técnico Oficial del Proyecto</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LÓGICA DE LA APLICACIÓN -->
+    <script>
+        // Tab switching logic
+        function switchTab(targetId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            // Remove active class from buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active-tab', 'text-white', 'bg-purple-600');
+                btn.classList.add('text-slate-400');
+            });
+            // Show target tab
+            const targetTab = document.getElementById('tab-' + targetId);
+            if (targetTab) {
+                targetTab.classList.remove('hidden');
+            }
+            // Highlight button
+            const activeBtn = document.querySelector(`[data-target="${targetId}"]`);
+            if (activeBtn) {
+                activeBtn.classList.add('active-tab', 'text-white', 'bg-purple-600');
+                activeBtn.classList.remove('text-slate-400');
+            }
+        }
+
+        // HC-SR04 Calculator Logic
+        function calculateDistance() {
+            const input = document.getElementById('usInput');
+            const range = document.getElementById('usRange');
+            let us = parseFloat(input.value) || 0;
+            
+            // Formula from official PDF: distancia = duracion * 0.0343 / 2.0
+            let dist = (us * 0.0343) / 2.0;
+            
+            document.getElementById('distResult').innerText = dist.toFixed(2) + " cm";
+            range.value = us;
+        }
+
+        function syncFromRange() {
+            const input = document.getElementById('usInput');
+            const range = document.getElementById('usRange');
+            input.value = range.value;
+            calculateDistance();
+        }
+
+        // Module Filtering & Search
+        function filterModules(category) {
+            const cards = document.querySelectorAll('.module-card');
+            cards.forEach(card => {
+                if (category === 'all' || card.getAttribute('data-category') === category) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+
+            // Update Filter Button Styles
+            document.querySelectorAll('.module-filter-btn').forEach(btn => {
+                btn.classList.remove('bg-purple-600', 'text-white');
+                btn.classList.add('bg-slate-800', 'text-slate-300');
+            });
+            event.currentTarget.classList.add('bg-purple-600', 'text-white');
+            event.currentTarget.classList.remove('bg-slate-800', 'text-slate-300');
+        }
+
+        function searchModules() {
+            const query = document.getElementById('moduleSearch').value.toLowerCase();
+            const cards = document.querySelectorAll('.module-card');
+            cards.forEach(card => {
+                const name = card.getAttribute('data-name').toLowerCase();
+                if (name.includes(query)) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+        }
+
+        // Current Calculator Logic
+        function calcTotalCurrent() {
+            let total = 60; // Base Arduino UNO
+            if (document.getElementById('chkRelays').checked) total += 320;
+            if (document.getElementById('chkServos').checked) total += 350;
+            if (document.getElementById('chkLCD').checked) total += 25;
+            if (document.getElementById('chkHCSR04').checked) total += 15;
+
+            document.getElementById('currentTotal').innerText = total + " mA";
+        }
+
+        // Mobile Menu Toggle
+        document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+            const nav = document.getElementById('navMenu');
+            nav.classList.toggle('hidden');
+        });
+    </script>
+</body>
+</html>
